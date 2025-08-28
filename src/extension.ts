@@ -381,7 +381,7 @@ export function activate(context: vscode.ExtensionContext) {
 
         switch (currentPhase) {
           case "requirements":
-            prompt = workflowManager.getRequirementsPrompt(featureName);
+            prompt = workflowManager.getRequirementsPrompt();
             break;
           case "design":
             prompt = workflowManager.getDesignPrompt();
@@ -499,6 +499,36 @@ export function activate(context: vscode.ExtensionContext) {
     }
   );
 
+  // Reset spec command
+  const resetSpec = vscode.commands.registerCommand(
+    "specMode.resetSpec",
+    async () => {
+      try {
+        await workflowManager.resetSpec();
+        uiManager.refresh();
+      } catch (error) {
+        await ErrorHandler.handleError(
+          error instanceof Error ? error : new Error(String(error))
+        );
+      }
+    }
+  );
+
+  // Restart current phase command
+  const restartPhase = vscode.commands.registerCommand(
+    "specMode.restartPhase",
+    async () => {
+      try {
+        await workflowManager.restartCurrentPhase();
+        uiManager.refresh();
+      } catch (error) {
+        await ErrorHandler.handleError(
+          error instanceof Error ? error : new Error(String(error))
+        );
+      }
+    }
+  );
+
   context.subscriptions.push(
     startSpecMode,
     nextPhase,
@@ -512,6 +542,8 @@ export function activate(context: vscode.ExtensionContext) {
     copyPrompts,
     showGuidance,
     openSettings,
+    resetSpec,
+    restartPhase,
     uiManager
   );
 }

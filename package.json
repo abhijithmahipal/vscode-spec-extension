@@ -108,6 +108,18 @@
         "title": "⚙️ Settings",
         "category": "Spec",
         "icon": "$(settings-gear)"
+      },
+      {
+        "command": "specMode.resetSpec",
+        "title": "🔄 Reset Spec",
+        "category": "Spec",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "specMode.restartPhase",
+        "title": "↩️ Restart Phase",
+        "category": "Spec",
+        "icon": "$(debug-restart)"
       }
     ],
     "views": {
@@ -154,6 +166,16 @@
           "command": "specMode.openSettings",
           "when": "view == specPanel",
           "group": "navigation"
+        },
+        {
+          "command": "specMode.restartPhase",
+          "when": "view == specPanel && specMode.active",
+          "group": "secondary"
+        },
+        {
+          "command": "specMode.resetSpec",
+          "when": "view == specPanel && specMode.active",
+          "group": "secondary"
         }
       ],
       "view/item/context": [

@@ -244,37 +244,6 @@ export class WorkflowManager {
     }
   }
 
-  getRequirementsPrompt(featureName: string, originalIdea?: string): string {
-    const ideaText = originalIdea || featureName;
-    return `I'm starting a new feature spec for: "${ideaText}"
-
-Feature name: ${featureName}
-
-Please help me create a requirements document following this format:
-
-# Requirements Document
-
-## Introduction
-[Brief summary of the feature]
-
-## Requirements
-
-### Requirement 1
-**User Story:** As a [role], I want [feature], so that [benefit]
-
-#### Acceptance Criteria
-1. WHEN [event] THEN [system] SHALL [response]
-2. IF [precondition] THEN [system] SHALL [response]
-
-Please create comprehensive requirements with user stories and EARS format acceptance criteria. Focus on:
-- User experience and workflows
-- Edge cases and error scenarios  
-- Technical constraints
-- Success criteria
-
-Save the output to .kiro/specs/${featureName}/requirements.md when complete.`;
-  }
-
   async getTasks(): Promise<TaskItem[]> {
     const tasksFile = path.join(this.specPath, "tasks.md");
     if (!fs.existsSync(tasksFile)) {
@@ -398,6 +367,120 @@ Save the output to .kiro/specs/${featureName}/requirements.md when complete.`;
     const phaseNames = Object.values(SpecPhase);
     const currentIndex = phaseNames.indexOf(this.currentPhase);
     return `${currentIndex + 1}/${phaseNames.length} phases complete`;
+  }
+
+  async resetSpec(): Promise<void> {
+    try {
+      if (!this.isSpecActive) {
+        await this.notificationManager.showWarning("No active spec to reset.");
+        return;
+      }
+
+      const confirmed = await this.notificationManager.showConfirmation(
+        `Are you sure you want to reset the spec "${this.currentFeature}"?\n\nThis will delete all spec files and start over.`,
+        ["Yes, Reset", "Cancel"]
+      );
+
+      if (confirmed !== "Yes, Reset") {
+        return;
+      }
+
+      // Delete spec directory
+      if (this.specPath && fs.existsSync(this.specPath)) {
+        await this.fileManager.deleteDirectory(this.specPath);
+      }
+
+      // Reset state
+      this.currentFeature = "";
+      this.currentPhase = SpecPhase.REQUIREMENTS;
+      this.originalIdea = "";
+      this.isSpecActive = false;
+      this.specPath = "";
+
+      await this.notificationManager.showSuccess(
+        "Spec reset successfully! You can now start a new spec."
+      );
+    } catch (error) {
+      await ErrorHandler.handleError(
+        error instanceof Error ? error : new Error(String(error))
+      );
+      throw error;
+    }
+  }
+
+  async restartCurrentPhase(): Promise<void> {
+    try {
+      if (!this.isSpecActive) {
+        await this.notificationManager.showWarning(
+          "No active spec to restart."
+        );
+        return;
+      }
+
+      const currentPhaseName =
+        this.currentPhase.charAt(0).toUpperCase() + this.currentPhase.slice(1);
+      const confirmed = await this.notificationManager.showConfirmation(
+        `Restart the ${currentPhaseName} phase for "${this.currentFeature}"?\n\nThis will delete the current ${this.currentPhase}.md file.`,
+        ["Yes, Restart", "Cancel"]
+      );
+
+      if (confirmed !== "Yes, Restart") {
+        return;
+      }
+
+      // Delete current phase file
+      const phaseFile = path.join(this.specPath, `${this.currentPhase}.md`);
+      if (fs.existsSync(phaseFile)) {
+        await this.fileManager.deleteFile(phaseFile);
+      }
+
+      await this.notificationManager.showSuccess(
+        `${currentPhaseName} phase restarted! You can now regenerate the ${this.currentPhase}.md file.`
+      );
+    } catch (error) {
+      await ErrorHandler.handleError(
+        error instanceof Error ? error : new Error(String(error))
+      );
+      throw error;
+    }
+  }
+
+  public getRequirementsPrompt(
+    featureName?: string,
+    originalIdea?: string
+  ): string {
+    // Use stored values if parameters not provided
+    const actualFeatureName = featureName || this.currentFeature;
+    const actualOriginalIdea =
+      originalIdea || this.originalIdea || actualFeatureName;
+
+    return `I'm starting a new feature spec for: "${actualOriginalIdea}"
+
+Feature name: ${actualFeatureName}
+
+Please help me create a requirements document following this format:
+
+# Requirements Document
+
+## Introduction
+[Brief summary of the feature]
+
+## Requirements
+
+### Requirement 1
+**User Story:** As a [role], I want [feature], so that [benefit]
+
+#### Acceptance Criteria
+1. WHEN [event] THEN [system] SHALL [response]
+2. IF [precondition] THEN [system] SHALL [response]
+
+Please create comprehensive requirements with user stories and EARS format acceptance criteria. Focus on:
+- User experience and workflows
+- Edge cases and error scenarios  
+- Technical constraints
+- Success criteria
+
+Save the output to .kiro/specs/${actualFeatureName}/requirements.md when complete.`;
   }
 
   public getDesignPrompt(): string {

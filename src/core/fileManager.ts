@@ -120,6 +120,23 @@ export class FileManager {
   }
 
   /**
+   * Delete directory recursively
+   */
+  async deleteDirectory(dirPath: string): Promise<void> {
+    try {
+      if (fs.existsSync(dirPath)) {
+        fs.rmSync(dirPath, { recursive: true, force: true });
+      }
+    } catch (error) {
+      throw new Error(
+        `Failed to delete directory ${dirPath}: ${
+          error instanceof Error ? error.message : String(error)
+        }`
+      );
+    }
+  }
+
+  /**
    * List directory contents
    */
   async listDirectory(dirPath: string): Promise<string[]> {

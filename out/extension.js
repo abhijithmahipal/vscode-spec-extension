@@ -261,7 +261,7 @@ function activate(context) {
             let prompt = "";
             switch (currentPhase) {
                 case "requirements":
-                    prompt = workflowManager.getRequirementsPrompt(featureName);
+                    prompt = workflowManager.getRequirementsPrompt();
                     break;
                 case "design":
                     prompt = workflowManager.getDesignPrompt();
@@ -349,7 +349,27 @@ function activate(context) {
             await errorHandler_1.ErrorHandler.handleError(error instanceof Error ? error : new Error(String(error)));
         }
     });
-    context.subscriptions.push(startSpecMode, nextPhase, executeTask, executeTaskEnhanced, refresh, openFile, markComplete, reopenTask, showAllTasks, copyPrompts, showGuidance, openSettings, uiManager);
+    // Reset spec command
+    const resetSpec = vscode.commands.registerCommand("specMode.resetSpec", async () => {
+        try {
+            await workflowManager.resetSpec();
+            uiManager.refresh();
+        }
+        catch (error) {
+            await errorHandler_1.ErrorHandler.handleError(error instanceof Error ? error : new Error(String(error)));
+        }
+    });
+    // Restart current phase command
+    const restartPhase = vscode.commands.registerCommand("specMode.restartPhase", async () => {
+        try {
+            await workflowManager.restartCurrentPhase();
+            uiManager.refresh();
+        }
+        catch (error) {
+            await errorHandler_1.ErrorHandler.handleError(error instanceof Error ? error : new Error(String(error)));
+        }
+    });
+    context.subscriptions.push(startSpecMode, nextPhase, executeTask, executeTaskEnhanced, refresh, openFile, markComplete, reopenTask, showAllTasks, copyPrompts, showGuidance, openSettings, resetSpec, restartPhase, uiManager);
 }
 exports.activate = activate;
 function deactivate() { }
