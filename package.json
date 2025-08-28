@@ -1,0 +1,150 @@
+{
+  "name": "spec-driven-development",
+  "displayName": "Spec-Driven Development",
+  "description": "Kiro-style spec workflow for VSCode with GitHub Copilot integration",
+  "version": "1.0.0",
+  "publisher": "your-publisher-name",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/spec-driven-development"
+  },
+  "engines": {
+    "vscode": "^1.74.0"
+  },
+  "categories": ["Other", "Snippets", "Education"],
+  "keywords": ["spec", "requirements", "design", "copilot", "workflow", "kiro"],
+
+  "activationEvents": [],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "specMode.start",
+        "title": "🚀 Start New Spec",
+        "category": "Spec",
+        "icon": "$(add)"
+      },
+      {
+        "command": "specMode.nextPhase",
+        "title": "➡️ Next Phase",
+        "category": "Spec",
+        "icon": "$(arrow-right)"
+      },
+      {
+        "command": "specMode.executeTask",
+        "title": "▶️ Execute Task",
+        "category": "Spec",
+        "icon": "$(play)"
+      },
+      {
+        "command": "specMode.refresh",
+        "title": "🔄 Refresh",
+        "category": "Spec",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "specMode.openFile",
+        "title": "📄 Open File",
+        "category": "Spec",
+        "icon": "$(go-to-file)"
+      },
+      {
+        "command": "specMode.markComplete",
+        "title": "✅ Mark Complete",
+        "category": "Spec",
+        "icon": "$(check)"
+      },
+      {
+        "command": "specMode.copyPrompts",
+        "title": "📋 Copy Prompts",
+        "category": "Spec",
+        "icon": "$(clippy)"
+      },
+      {
+        "command": "specMode.showGuidance",
+        "title": "💡 Get Guidance",
+        "category": "Spec",
+        "icon": "$(lightbulb)"
+      }
+    ],
+    "views": {
+      "spec-container": [
+        {
+          "id": "specPanel",
+          "name": "Spec Workflow",
+          "when": "true"
+        },
+        {
+          "id": "specFiles",
+          "name": "Spec Files",
+          "when": "specMode.active"
+        },
+        {
+          "id": "specHelp",
+          "name": "Quick Help",
+          "when": "true"
+        }
+      ]
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "spec-container",
+          "title": "Spec Development",
+          "icon": "$(notebook)"
+        }
+      ]
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "specMode.start",
+          "when": "view == specPanel && !specMode.active",
+          "group": "navigation"
+        },
+        {
+          "command": "specMode.refresh",
+          "when": "view == specPanel",
+          "group": "navigation"
+        },
+        {
+          "command": "specMode.copyPrompts",
+          "when": "view == specPanel && specMode.active",
+          "group": "navigation"
+        },
+        {
+          "command": "specMode.showGuidance",
+          "when": "view == specPanel",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "specMode.executeTask",
+          "when": "view == specPanel && viewItem == task-incomplete",
+          "group": "inline"
+        },
+        {
+          "command": "specMode.markComplete",
+          "when": "view == specPanel && viewItem == task-incomplete",
+          "group": "inline"
+        },
+        {
+          "command": "specMode.openFile",
+          "when": "view == specFiles && viewItem == spec-file",
+          "group": "inline"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.74.0",
+    "@types/node": "16.x",
+    "typescript": "^4.9.4"
+  }
+}
