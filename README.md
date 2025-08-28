@@ -1,5 +1,7 @@
 # Specster
 
+> **Note:** This extension is inspired by the spec-driven development workflow popularized by KIRO IDE and is built by the KIRO. I welcome contributions from the community!
+
 **Systematic feature development with requirements, design, and implementation planning for GitHub Copilot**
 
 ![Version](https://img.shields.io/visual-studio-marketplace/v/AbhijithMahipalMalappuram.specster)
@@ -191,21 +193,19 @@ Access settings via: **File → Preferences → Settings** → Search "Specster"
 
 ## Support
 
-- **Documentation**: [User Guide](https://github.com/spec-dev-tools/vscode-spec-driven-development/wiki)
-- **Issues**: [GitHub Issues](https://github.com/spec-dev-tools/vscode-spec-driven-development/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/spec-dev-tools/vscode-spec-driven-development/discussions)
-
-* **Email**: contact@spec-dev-tools.com
+- **Documentation**: See the [User Guide](docs/README.md) in this repository
+- **Issues**: [GitHub Issues](https://github.com/abhijithmahipal/vscode-spec-extension/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/abhijithmahipal/vscode-spec-extension/discussions)
 
 ## Contributing
 
-We welcome contributions! Please see our [Contributing Guide](https://github.com/spec-dev-tools/vscode-spec-driven-development/blob/main/CONTRIBUTING.md) for details.
+We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
 
 ### Development Setup
 
 ```bash
-git clone https://github.com/spec-dev-tools/vscode-spec-driven-development
-cd vscode-spec-driven-development
+git clone https://github.com/abhijithmahipal/vscode-spec-extension.git
+cd vscode-spec-extension
 npm install
 code .
 # Press F5 to launch Extension Development Host
@@ -217,7 +217,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Acknowledgments
 
-- Inspired by systematic development methodologies and spec-driven development practices
+- Inspired by systematic development methodologies and spec-driven development practices, especially the KIRO IDE spec-driven workflow
 - Built for the GitHub Copilot ecosystem and modern AI-assisted development
 - Designed for professional development teams and individual developers
 

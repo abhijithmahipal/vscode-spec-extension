@@ -1,6 +1,6 @@
 # Documentation
 
-This directory contains additional documentation for the Specster extension.
+This directory contains additional documentation for the Specster extension, inspired by KIRO IDE's spec-driven development.
 
 ## Contents
 
@@ -13,8 +13,8 @@ This directory contains additional documentation for the Specster extension.
 
 - [Getting Started](../README.md#getting-started)
 - [Configuration](../README.md#configuration)
-- [Contributing](../CONTRIBUTING.md)
-- [Changelog](../CHANGELOG.md)
+- [Contributing](https://github.com/abhijithmahipal/vscode-spec-extension/blob/main/CONTRIBUTING.md)
+- [Changelog](https://github.com/abhijithmahipal/vscode-spec-extension/blob/main/CHANGELOG.md)
 
 ## External Resources
 

@@ -1,6 +1,6 @@
-# Contributing to Spec-Driven Development
+# Contributing to Specster (Spec-Driven Development)
 
-Thank you for your interest in contributing to the Spec-Driven Development extension! We welcome contributions from the community and are grateful for your support.
+Thank you for your interest in contributing to the Specster extension! This project is inspired by KIRO IDE's spec-driven development methodology and is built by the KIRO. We welcome contributions from the community and are grateful for your support.
 
 ## Code of Conduct
 
@@ -31,8 +31,8 @@ We welcome feature suggestions! Please:
 1. **Fork and clone** the repository:
 
    ```bash
-   git clone https://github.com/your-username/vscode-spec-driven-development
-   cd vscode-spec-driven-development
+   git clone https://github.com/abhijithmahipal/vscode-spec-extension.git
+   cd vscode-spec-extension
    ```
 
 2. **Install dependencies**:
@@ -158,10 +158,9 @@ src/
 
 ## Getting Help
 
-- **Documentation**: Check the [Wiki](https://github.com/spec-dev-tools/vscode-spec-driven-development/wiki)
-- **Discussions**: Use [GitHub Discussions](https://github.com/spec-dev-tools/vscode-spec-driven-development/discussions)
-- **Issues**: Search [existing issues](https://github.com/spec-dev-tools/vscode-spec-driven-development/issues)
-- **Email**: Contact us at contact@spec-dev-tools.com
+- **Documentation**: See the [User Guide](../docs/README.md) in this repository
+- **Discussions**: Use [GitHub Discussions](https://github.com/abhijithmahipal/vscode-spec-extension/discussions)
+- **Issues**: Search [existing issues](https://github.com/abhijithmahipal/vscode-spec-extension/issues)
 
 ## Recognition
 
