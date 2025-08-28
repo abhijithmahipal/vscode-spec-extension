@@ -1,6 +1,6 @@
 # Documentation
 
-This directory contains additional documentation for the Spec-Driven Development extension.
+This directory contains additional documentation for the Specster extension.
 
 ## Contents
 
@@ -20,4 +20,3 @@ This directory contains additional documentation for the Spec-Driven Development
 
 - [VS Code Extension Guidelines](https://code.visualstudio.com/api/references/extension-guidelines)
 - [GitHub Copilot Documentation](https://docs.github.com/en/copilot)
-- [Spec-Driven Development Methodology](https://github.com/spec-dev-tools/vscode-spec-driven-development/wiki)

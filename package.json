@@ -1,9 +1,9 @@
 {
-  "name": "spec-driven-development",
-  "displayName": "Spec-Driven Development",
+  "name": "specster",
+  "displayName": "Specster",
   "description": "Systematic feature development with requirements, design, and implementation planning for GitHub Copilot",
   "version": "1.0.0",
-  "publisher": "spec-dev-tools",
+  "publisher": "AbhijithMahipalMalappuram",
   "author": {
     "name": "Spec Development Tools",
     "email": "contact@spec-dev-tools.com"

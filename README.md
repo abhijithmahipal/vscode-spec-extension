@@ -1,16 +1,16 @@
-# Spec-Driven Development
+# Specster
 
 **Systematic feature development with requirements, design, and implementation planning for GitHub Copilot**
 
-[![Version](https://img.shields.io/visual-studio-marketplace/v/spec-dev-tools.spec-driven-development)](https://marketplace.visualstudio.com/items?itemName=spec-dev-tools.spec-driven-development)
-[![Installs](https://img.shields.io/visual-studio-marketplace/i/spec-dev-tools.spec-driven-development)](https://marketplace.visualstudio.com/items?itemName=spec-dev-tools.spec-driven-development)
-[![Rating](https://img.shields.io/visual-studio-marketplace/r/spec-dev-tools.spec-driven-development)](https://marketplace.visualstudio.com/items?itemName=spec-dev-tools.spec-driven-development)
+![Version](https://img.shields.io/visual-studio-marketplace/v/AbhijithMahipalMalappuram.specster)
+![Installs](https://img.shields.io/visual-studio-marketplace/i/AbhijithMahipalMalappuram.specster)
+![Rating](https://img.shields.io/visual-studio-marketplace/r/AbhijithMahipalMalappuram.specster)
 [![VSCode](https://img.shields.io/badge/VSCode-1.74+-green.svg)](https://code.visualstudio.com/)
 [![GitHub Copilot](https://img.shields.io/badge/GitHub%20Copilot-Compatible-purple.svg)](https://github.com/features/copilot)
 
-Transform your development workflow with a systematic approach to feature development. This extension guides you through a proven methodology: Requirements → Design → Tasks → Implementation, with seamless GitHub Copilot integration.
+Transform your development workflow with a systematic approach to feature development. Specster guides you through a proven methodology: Requirements → Design → Tasks → Implementation, with seamless GitHub Copilot integration.
 
-![Spec-Driven Development Workflow](https://raw.githubusercontent.com/spec-dev-tools/vscode-spec-driven-development/main/docs/images/workflow-overview.gif)
+![Specster Workflow](https://raw.githubusercontent.com/spec-dev-tools/vscode-spec-driven-development/main/docs/images/workflow-overview.gif)
 
 ## Features
 
@@ -47,7 +47,7 @@ Transform your development workflow with a systematic approach to feature develo
 ### Installation
 
 1. Open VS Code Extensions panel (`Ctrl+Shift+X` / `Cmd+Shift+X`)
-2. Search for "Spec-Driven Development"
+2. Search for "Specster"
 3. Click **Install**
 4. Reload VS Code when prompted
 
@@ -55,8 +55,8 @@ Transform your development workflow with a systematic approach to feature develo
 
 1. **Start Your First Spec**
 
-   - Click the Spec icon in the Activity Bar (sidebar)
-   - Or use Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`): `Spec: Start New Spec`
+   - Click the Specster icon in the Activity Bar (sidebar)
+   - Or use Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`): `Specster: Start New Spec`
    - Enter your feature name and description
 
 2. **Follow the Guided Workflow**
@@ -157,7 +157,7 @@ The extension works out of the box with sensible defaults. Customize behavior th
 - `specDrivenDevelopment.uiPreferences.*` - Interface and display preferences
 - `specDrivenDevelopment.integration.*` - GitHub Copilot and file naming settings
 
-Access settings via: **File → Preferences → Settings** → Search "Spec-Driven Development"
+Access settings via: **File → Preferences → Settings** → Search "Specster"
 
 ## 🎯 Best Practices
 
@@ -194,7 +194,8 @@ Access settings via: **File → Preferences → Settings** → Search "Spec-Driv
 - **Documentation**: [User Guide](https://github.com/spec-dev-tools/vscode-spec-driven-development/wiki)
 - **Issues**: [GitHub Issues](https://github.com/spec-dev-tools/vscode-spec-driven-development/issues)
 - **Discussions**: [GitHub Discussions](https://github.com/spec-dev-tools/vscode-spec-driven-development/discussions)
-- **Email**: contact@spec-dev-tools.com
+
+* **Email**: contact@spec-dev-tools.com
 
 ## Contributing
 
