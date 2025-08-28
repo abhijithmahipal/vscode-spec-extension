@@ -3,29 +3,61 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.SpecHelpProvider = exports.SpecFilesProvider = exports.SpecPanelProvider = void 0;
 const vscode = require("vscode");
 const specWorkflowManager_1 = require("./specWorkflowManager");
+const taskManager_1 = require("./taskManager");
+const settingsManager_1 = require("./settingsManager");
 // Text wrapping and formatting utilities
+// Requirement 7.5: UI preferences and text wrapping
 class TextFormatter {
+    static getMaxLengths() {
+        const settingsManager = settingsManager_1.SettingsManager.getInstance();
+        const wrappingConfig = settingsManager.getTextWrappingConfig();
+        const uiPrefs = settingsManager.getUIPreferences();
+        if (!wrappingConfig.enabled) {
+            return {
+                label: Number.MAX_SAFE_INTEGER,
+                description: Number.MAX_SAFE_INTEGER,
+                tooltip: Number.MAX_SAFE_INTEGER,
+            };
+        }
+        const baseWidth = wrappingConfig.maxWidth || this.FIXED_WIDTH;
+        const compactMode = uiPrefs.compactMode;
+        return {
+            label: compactMode
+                ? Math.floor(baseWidth * 0.6)
+                : Math.floor(baseWidth * 0.8),
+            description: compactMode ? Math.floor(baseWidth * 0.8) : baseWidth,
+            tooltip: Math.floor(baseWidth * 0.75),
+        };
+    }
     static formatLabel(text) {
-        if (text.length <= this.MAX_LABEL_LENGTH) {
+        const maxLength = this.getMaxLengths().label;
+        if (text.length <= maxLength) {
             return text;
         }
-        return text.substring(0, this.MAX_LABEL_LENGTH - 3) + "...";
+        return text.substring(0, maxLength - 3) + "...";
     }
     static formatDescription(text) {
-        if (text.length <= this.MAX_DESCRIPTION_LENGTH) {
+        const maxLength = this.getMaxLengths().description;
+        if (text.length <= maxLength) {
             return text;
         }
-        return text.substring(0, this.MAX_DESCRIPTION_LENGTH - 3) + "...";
+        return text.substring(0, maxLength - 3) + "...";
     }
     static formatTooltip(text) {
-        if (text.length <= this.MAX_TOOLTIP_LINE_LENGTH) {
+        const settingsManager = settingsManager_1.SettingsManager.getInstance();
+        const uiPrefs = settingsManager.getUIPreferences();
+        if (!uiPrefs.showTooltips) {
+            return "";
+        }
+        const maxLineLength = this.getMaxLengths().tooltip;
+        if (text.length <= maxLineLength) {
             return text;
         }
         const words = text.split(" ");
         const lines = [];
         let currentLine = "";
         for (const word of words) {
-            if ((currentLine + " " + word).length <= this.MAX_TOOLTIP_LINE_LENGTH) {
+            if ((currentLine + " " + word).length <= maxLineLength) {
                 currentLine = currentLine ? currentLine + " " + word : word;
             }
             else {
@@ -101,9 +133,10 @@ class TextFormatter {
         return lengths[panelSize];
     }
 }
-TextFormatter.MAX_LABEL_LENGTH = 50;
-TextFormatter.MAX_DESCRIPTION_LENGTH = 80;
-TextFormatter.MAX_TOOLTIP_LINE_LENGTH = 60;
+TextFormatter.DEFAULT_MAX_LABEL_LENGTH = 50;
+TextFormatter.DEFAULT_MAX_DESCRIPTION_LENGTH = 80;
+TextFormatter.DEFAULT_MAX_TOOLTIP_LINE_LENGTH = 60;
+TextFormatter.FIXED_WIDTH = 80;
 class SpecPanelProvider {
     constructor(extensionUri, workflowManager) {
         this.extensionUri = extensionUri;
@@ -112,6 +145,22 @@ class SpecPanelProvider {
         this.onDidChangeTreeData = this._onDidChangeTreeData.event;
         // Panel size estimation for responsive text formatting
         this.panelSize = "normal";
+        this.taskManager = null;
+        // Initialize task manager when workflow is active
+        this.initializeTaskManager();
+    }
+    async initializeTaskManager() {
+        if (this.workflowManager.isActive()) {
+            const specFiles = await this.workflowManager.getSpecFiles();
+            const specPath = specFiles.length > 0 ? specFiles[0].path.replace(/\/[^\/]+$/, "") : "";
+            if (specPath) {
+                this.taskManager = new taskManager_1.TaskManager(specPath);
+                // Listen for task status changes and refresh the view
+                this.taskManager.onTaskStatusChanged(() => {
+                    this.refresh();
+                });
+            }
+        }
     }
     // Method to update panel size (could be called from extension when panel resizes)
     updatePanelSize(size) {
@@ -182,31 +231,87 @@ class SpecPanelProvider {
                     }
                 }
             }
-            // Show tasks if in execution phase
+            // Show enhanced tasks if in execution phase
             if (currentPhase === specWorkflowManager_1.SpecPhase.EXECUTION) {
-                const tasks = await this.workflowManager.getTasks();
-                const completedTasks = tasks.filter((t) => t.completed).length;
-                // Add section header for tasks
-                items.push(this.createSectionHeader("Implementation Tasks", "Execute tasks one by one with Copilot assistance"));
-                items.push(this.createProgressItem(completedTasks, tasks.length, "Overall Progress"));
-                for (const task of tasks) {
-                    const statusIcon = task.completed ? "✅" : "⏳";
-                    const taskTitle = `${statusIcon} ${task.title}`;
-                    const taskDescription = task.completed
-                        ? "Completed successfully"
-                        : "Ready to execute with Copilot assistance";
-                    const taskItem = new SpecItem(taskTitle, taskDescription, vscode.TreeItemCollapsibleState.None, task.completed ? "task-complete" : "task-incomplete", undefined, `Task: ${task.title}. Status: ${task.completed ? "Completed" : "Pending"}. Requirements: ${task.requirements.join(", ") || "No requirements specified."}`);
-                    if (!task.completed) {
-                        taskItem.command = {
-                            command: "specMode.executeTask",
-                            title: "Execute Task",
-                            arguments: [{ task }],
-                        };
+                await this.initializeTaskManager();
+                if (this.taskManager) {
+                    const enhancedTasks = await this.taskManager.loadTasks();
+                    const taskProgress = this.taskManager.getTaskProgress();
+                    const tasksByStatus = this.taskManager.getTasksByStatus();
+                    const nextRecommended = this.taskManager.getNextRecommendedTask();
+                    // Add section header for tasks with enhanced progress
+                    items.push(this.createSectionHeader("Implementation Tasks", `${taskProgress.completedTasks}/${taskProgress.totalTasks} completed (${taskProgress.percentage}%)`));
+                    // Enhanced progress visualization
+                    items.push(this.createEnhancedProgressItem(taskProgress));
+                    // Show next recommended task prominently
+                    if (nextRecommended) {
+                        items.push(this.createRecommendedTaskItem(nextRecommended));
                     }
-                    items.push(taskItem);
+                    // Group tasks by status for better organization
+                    if (tasksByStatus.available.length > 0) {
+                        items.push(this.createSectionHeader("Available Tasks", `${tasksByStatus.available.length} tasks ready to execute`));
+                        for (const task of tasksByStatus.available.slice(0, 5)) {
+                            // Show max 5
+                            items.push(this.createEnhancedTaskItem(task, "available"));
+                        }
+                        if (tasksByStatus.available.length > 5) {
+                            items.push(new SpecItem(`📋 +${tasksByStatus.available.length - 5} more available tasks`, "Click to view all available tasks", vscode.TreeItemCollapsibleState.None, "more-tasks", {
+                                command: "specMode.showAllTasks",
+                                title: "Show All Tasks",
+                                arguments: ["available"],
+                            }));
+                        }
+                    }
+                    // Show blocked tasks if any
+                    if (tasksByStatus.blocked.length > 0) {
+                        items.push(this.createSectionHeader("Blocked Tasks", `${tasksByStatus.blocked.length} tasks waiting for dependencies`));
+                        for (const task of tasksByStatus.blocked.slice(0, 3)) {
+                            // Show max 3
+                            items.push(this.createEnhancedTaskItem(task, "blocked"));
+                        }
+                    }
+                    // Show recently completed tasks
+                    if (tasksByStatus.completed.length > 0) {
+                        const recentCompleted = tasksByStatus.completed
+                            .sort((a, b) => (b.lastModified?.getTime() || 0) -
+                            (a.lastModified?.getTime() || 0))
+                            .slice(0, 3);
+                        if (recentCompleted.length > 0) {
+                            items.push(this.createSectionHeader("Recently Completed", `${tasksByStatus.completed.length} tasks completed`));
+                            for (const task of recentCompleted) {
+                                items.push(this.createEnhancedTaskItem(task, "completed"));
+                            }
+                        }
+                    }
+                    if (enhancedTasks.length === 0) {
+                        items.push(new SpecItem("⚠️ No tasks found", "Complete the Tasks phase first", vscode.TreeItemCollapsibleState.None, "warning"));
+                    }
                 }
-                if (tasks.length === 0) {
-                    items.push(new SpecItem("⚠️ No tasks found", "Complete the Tasks phase first", vscode.TreeItemCollapsibleState.None, "warning"));
+                else {
+                    // Fallback to original task display
+                    const tasks = await this.workflowManager.getTasks();
+                    const completedTasks = tasks.filter((t) => t.completed).length;
+                    items.push(this.createSectionHeader("Implementation Tasks", "Execute tasks one by one with Copilot assistance"));
+                    items.push(this.createProgressItem(completedTasks, tasks.length, "Overall Progress"));
+                    for (const task of tasks) {
+                        const statusIcon = task.completed ? "✅" : "⏳";
+                        const taskTitle = `${statusIcon} ${task.title}`;
+                        const taskDescription = task.completed
+                            ? "Completed successfully"
+                            : "Ready to execute with Copilot assistance";
+                        const taskItem = new SpecItem(taskTitle, taskDescription, vscode.TreeItemCollapsibleState.None, task.completed ? "task-complete" : "task-incomplete", undefined, `Task: ${task.title}. Status: ${task.completed ? "Completed" : "Pending"}. Requirements: ${task.requirements.join(", ") || "No requirements specified."}`);
+                        if (!task.completed) {
+                            taskItem.command = {
+                                command: "specMode.executeTask",
+                                title: "Execute Task",
+                                arguments: [{ task }],
+                            };
+                        }
+                        items.push(taskItem);
+                    }
+                    if (tasks.length === 0) {
+                        items.push(new SpecItem("⚠️ No tasks found", "Complete the Tasks phase first", vscode.TreeItemCollapsibleState.None, "warning"));
+                    }
                 }
             }
             // Add visual separator before actions
@@ -333,6 +438,138 @@ class SpecPanelProvider {
         const empty = "░".repeat(barLength - filledLength);
         return `[${filled}${empty}]`;
     }
+    /**
+     * Create enhanced progress item with detailed breakdown
+     * Requirement 5.1: Clear progress indicators and task status
+     */
+    createEnhancedProgressItem(progress) {
+        const progressBar = this.createProgressBar(progress.percentage);
+        const statusBreakdown = [];
+        if (progress.completedTasks > 0) {
+            statusBreakdown.push(`✅ ${progress.completedTasks} completed`);
+        }
+        if (progress.inProgressTasks > 0) {
+            statusBreakdown.push(`⏳ ${progress.inProgressTasks} in progress`);
+        }
+        if (progress.blockedTasks > 0) {
+            statusBreakdown.push(`🚫 ${progress.blockedTasks} blocked`);
+        }
+        const availableTasks = progress.totalTasks -
+            progress.completedTasks -
+            progress.inProgressTasks -
+            progress.blockedTasks;
+        if (availableTasks > 0) {
+            statusBreakdown.push(`📋 ${availableTasks} available`);
+        }
+        return new SpecItem(`${progressBar} Overall Progress`, `${progress.completedTasks}/${progress.totalTasks} completed (${progress.percentage}%)`, vscode.TreeItemCollapsibleState.None, "enhanced-progress", undefined, `Task Progress Breakdown:\n${statusBreakdown.join("\n")}\n\nTotal: ${progress.totalTasks} tasks`);
+    }
+    /**
+     * Create recommended task item with special highlighting
+     * Requirement 5.2: Contextual prompts and clear next steps
+     */
+    createRecommendedTaskItem(task) {
+        const item = new SpecItem(`⭐ ${task.title}`, "Recommended next task - ready to execute", vscode.TreeItemCollapsibleState.None, "task-recommended", {
+            command: "specMode.executeTaskEnhanced",
+            title: "Execute Recommended Task",
+            arguments: [task],
+        }, this.createTaskTooltip(task, "This is the recommended next task based on dependencies and priority."));
+        return item;
+    }
+    /**
+     * Create enhanced task item with status indicators and dependency info
+     * Requirement 5.1: Clear progress indicators and task status
+     * Requirement 5.4: Task dependency visualization (from design)
+     */
+    createEnhancedTaskItem(task, status) {
+        let statusIcon;
+        let contextValue;
+        let description;
+        let command;
+        switch (status) {
+            case "available":
+                statusIcon = "🟢";
+                contextValue = "task-available";
+                description = "Ready to execute";
+                command = {
+                    command: "specMode.executeTaskEnhanced",
+                    title: "Execute Task",
+                    arguments: [task],
+                };
+                break;
+            case "blocked":
+                statusIcon = "🔴";
+                contextValue = "task-blocked";
+                description = `Blocked by ${task.dependencies.length} dependencies`;
+                break;
+            case "completed":
+                statusIcon = "✅";
+                contextValue = "task-completed";
+                description = "Completed successfully";
+                command = {
+                    command: "specMode.reopenTask",
+                    title: "Reopen Task",
+                    arguments: [task],
+                };
+                break;
+        }
+        // Add complexity indicator
+        if (task.complexity) {
+            const complexityIcon = this.getComplexityIcon(task.complexity);
+            statusIcon += complexityIcon;
+        }
+        // Add sub-task indicator
+        if (task.subTasks && task.subTasks.length > 0) {
+            statusIcon += "📁";
+        }
+        const item = new SpecItem(`${statusIcon} ${task.title}`, description, vscode.TreeItemCollapsibleState.None, contextValue, command, this.createTaskTooltip(task));
+        return item;
+    }
+    /**
+     * Get complexity icon for task
+     */
+    getComplexityIcon(complexity) {
+        switch (complexity.toLowerCase()) {
+            case "low":
+                return "🟢";
+            case "medium":
+                return "🟡";
+            case "high":
+                return "🔴";
+            default:
+                return "";
+        }
+    }
+    /**
+     * Create comprehensive tooltip for task
+     */
+    createTaskTooltip(task, additionalInfo) {
+        const parts = [];
+        parts.push(`Task: ${task.title}`);
+        parts.push(`Status: ${task.completed ? "Completed" : "Pending"}`);
+        if (task.requirements.length > 0) {
+            parts.push(`Requirements: ${task.requirements.join(", ")}`);
+        }
+        if (task.dependencies.length > 0) {
+            parts.push(`Dependencies: ${task.dependencies.join(", ")}`);
+        }
+        if (task.complexity) {
+            parts.push(`Complexity: ${task.complexity.toUpperCase()}`);
+        }
+        if (task.estimatedDuration) {
+            parts.push(`Estimated Duration: ${task.estimatedDuration} minutes`);
+        }
+        if (task.subTasks && task.subTasks.length > 0) {
+            parts.push(`Sub-tasks: ${task.subTasks.length}`);
+        }
+        if (task.contextFiles && task.contextFiles.length > 0) {
+            parts.push(`Context Files: ${task.contextFiles.join(", ")}`);
+        }
+        if (additionalInfo) {
+            parts.push("");
+            parts.push(additionalInfo);
+        }
+        return parts.join("\n");
+    }
 }
 exports.SpecPanelProvider = SpecPanelProvider;
 class SpecFilesProvider {
@@ -421,6 +658,18 @@ class SpecItem extends vscode.TreeItem {
                 return new vscode.ThemeIcon("clippy", new vscode.ThemeColor("charts.green"));
             case "show-guidance":
                 return new vscode.ThemeIcon("lightbulb", new vscode.ThemeColor("charts.yellow"));
+            case "enhanced-progress":
+                return new vscode.ThemeIcon("graph-line", new vscode.ThemeColor("charts.blue"));
+            case "task-recommended":
+                return new vscode.ThemeIcon("star-full", new vscode.ThemeColor("charts.orange"));
+            case "task-available":
+                return new vscode.ThemeIcon("circle-filled", new vscode.ThemeColor("charts.green"));
+            case "task-blocked":
+                return new vscode.ThemeIcon("circle-slash", new vscode.ThemeColor("charts.red"));
+            case "task-completed":
+                return new vscode.ThemeIcon("check-all", new vscode.ThemeColor("charts.green"));
+            case "more-tasks":
+                return new vscode.ThemeIcon("ellipsis", new vscode.ThemeColor("charts.blue"));
             default:
                 return undefined;
         }

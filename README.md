@@ -1,60 +1,76 @@
-# 🚀 Spec-Driven Development
+# Spec-Driven Development
 
-> Transform your development workflow with Kiro-style spec methodology in VSCode + GitHub Copilot
+**Systematic feature development with requirements, design, and implementation planning for GitHub Copilot**
 
-[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://marketplace.visualstudio.com/items?itemName=your-publisher.spec-driven-development)
+[![Version](https://img.shields.io/visual-studio-marketplace/v/spec-dev-tools.spec-driven-development)](https://marketplace.visualstudio.com/items?itemName=spec-dev-tools.spec-driven-development)
+[![Installs](https://img.shields.io/visual-studio-marketplace/i/spec-dev-tools.spec-driven-development)](https://marketplace.visualstudio.com/items?itemName=spec-dev-tools.spec-driven-development)
+[![Rating](https://img.shields.io/visual-studio-marketplace/r/spec-dev-tools.spec-driven-development)](https://marketplace.visualstudio.com/items?itemName=spec-dev-tools.spec-driven-development)
 [![VSCode](https://img.shields.io/badge/VSCode-1.74+-green.svg)](https://code.visualstudio.com/)
-[![Copilot](https://img.shields.io/badge/GitHub%20Copilot-Compatible-purple.svg)](https://github.com/features/copilot)
+[![GitHub Copilot](https://img.shields.io/badge/GitHub%20Copilot-Compatible-purple.svg)](https://github.com/features/copilot)
 
-## ✨ Features
+Transform your development workflow with a systematic approach to feature development. This extension guides you through a proven methodology: Requirements → Design → Tasks → Implementation, with seamless GitHub Copilot integration.
 
-### 🎯 **Structured Development Workflow**
+![Spec-Driven Development Workflow](https://raw.githubusercontent.com/spec-dev-tools/vscode-spec-driven-development/main/docs/images/workflow-overview.gif)
+
+## Features
+
+### Structured Development Workflow
 
 - **Requirements Phase**: Define user stories with EARS format acceptance criteria
-- **Design Phase**: Create comprehensive technical architecture
-- **Tasks Phase**: Break down into actionable implementation steps
-- **Execution Phase**: Code with Copilot assistance
+- **Design Phase**: Create comprehensive technical architecture and component design
+- **Tasks Phase**: Break down features into actionable, testable implementation steps
+- **Execution Phase**: Implement with GitHub Copilot assistance using context-aware prompts
 
-### 🤖 **GitHub Copilot Integration**
+### GitHub Copilot Integration
 
-- Context-aware prompts for each development phase
-- Structured templates that maximize Copilot effectiveness
-- File references for comprehensive understanding
-- Clipboard integration for seamless workflow
+- **Context-Aware Prompts**: Generated prompts include full context from requirements and design
+- **Structured Templates**: Maximize Copilot effectiveness with well-formatted, detailed prompts
+- **File References**: Automatic inclusion of relevant spec files for comprehensive understanding
+- **Clipboard Integration**: One-click copying of prompts for seamless workflow
 
-### 📊 **Visual Progress Tracking**
+### Visual Progress Tracking
 
-- Interactive sidebar panel with phase indicators
-- Task management with click-to-execute functionality
-- Progress visualization and completion tracking
-- Status bar integration
+- **Interactive Sidebar**: Dedicated panel with phase indicators and progress visualization
+- **Task Management**: Click-to-execute functionality for individual implementation tasks
+- **Status Integration**: Real-time progress updates in VS Code status bar
+- **File Organization**: Automatic organization of spec files in logical directory structure
 
-### 💡 **Intelligent Guidance**
+### Intelligent Guidance
 
-- Phase-specific tips and best practices
-- Context-sensitive help system
-- Welcome experience for new users
-- File organization and management
+- **Phase-Specific Tips**: Contextual help and best practices for each development phase
+- **Welcome Experience**: Guided onboarding for new users with interactive tutorials
+- **Smart Validation**: Automatic validation of spec completeness and quality
+- **Error Prevention**: Built-in checks to prevent common specification mistakes
 
-## 🚀 Quick Start
+## Getting Started
 
-### 1. **Start Your First Spec**
+### Installation
 
-- Click the Spec icon in the sidebar
-- Or use Command Palette: `Spec: Start New Spec`
-- Describe your feature in natural language
+1. Open VS Code Extensions panel (`Ctrl+Shift+X` / `Cmd+Shift+X`)
+2. Search for "Spec-Driven Development"
+3. Click **Install**
+4. Reload VS Code when prompted
 
-### 2. **Follow the Guided Workflow**
+### Quick Start
 
-```
-💭 Feature Idea → 📝 Requirements → 🎨 Design → 📋 Tasks → ⚡ Execution
-```
+1. **Start Your First Spec**
 
-### 3. **Work with Copilot**
+   - Click the Spec icon in the Activity Bar (sidebar)
+   - Or use Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`): `Spec: Start New Spec`
+   - Enter your feature name and description
 
-- Extension generates structured prompts
-- Copy prompts to GitHub Copilot chat
-- Get context-aware assistance for each phase
+2. **Follow the Guided Workflow**
+
+   ```
+   Feature Idea → Requirements → Design → Tasks → Implementation
+   ```
+
+3. **Work with GitHub Copilot**
+   - Extension generates structured, context-aware prompts
+   - Click "Copy Prompts" to get prompts for current phase
+   - Paste into GitHub Copilot Chat for intelligent assistance
+
+![Getting Started Demo](https://raw.githubusercontent.com/spec-dev-tools/vscode-spec-driven-development/main/docs/images/getting-started.gif)
 
 ## 📖 How It Works
 
@@ -127,27 +143,21 @@ The extension organizes your specs in a clean structure:
 - 🔄 Refresh and file management
 - 📄 Direct file access
 
-## 🛠️ Installation
+## Requirements
 
-### From Marketplace
+- **VS Code**: Version 1.74.0 or higher
+- **GitHub Copilot**: Recommended for optimal experience (not required)
+- **Node.js**: 16.x or higher (for development only)
 
-1. Open VSCode Extensions panel (`Ctrl+Shift+X`)
-2. Search for "Spec-Driven Development"
-3. Click Install
+## Configuration
 
-### Manual Installation
+The extension works out of the box with sensible defaults. Customize behavior through VS Code settings:
 
-```bash
-# Clone and build
-git clone https://github.com/your-username/spec-driven-development
-cd spec-driven-development
-npm install
-npm run compile
+- `specDrivenDevelopment.workflowBehavior.*` - Workflow and phase transition settings
+- `specDrivenDevelopment.uiPreferences.*` - Interface and display preferences
+- `specDrivenDevelopment.integration.*` - GitHub Copilot and file naming settings
 
-# Package and install
-vsce package
-code --install-extension spec-driven-development-1.0.0.vsix
-```
+Access settings via: **File → Preferences → Settings** → Search "Spec-Driven Development"
 
 ## 🎯 Best Practices
 
@@ -179,32 +189,37 @@ code --install-extension spec-driven-development-1.0.0.vsix
 - Regularly commit and review progress
 - Refactor and improve as you go
 
-## 🤝 Contributing
+## Support
 
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
+- **Documentation**: [User Guide](https://github.com/spec-dev-tools/vscode-spec-driven-development/wiki)
+- **Issues**: [GitHub Issues](https://github.com/spec-dev-tools/vscode-spec-driven-development/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/spec-dev-tools/vscode-spec-driven-development/discussions)
+- **Email**: contact@spec-dev-tools.com
+
+## Contributing
+
+We welcome contributions! Please see our [Contributing Guide](https://github.com/spec-dev-tools/vscode-spec-driven-development/blob/main/CONTRIBUTING.md) for details.
 
 ### Development Setup
 
 ```bash
-git clone https://github.com/your-username/spec-driven-development
-cd spec-driven-development
+git clone https://github.com/spec-dev-tools/vscode-spec-driven-development
+cd vscode-spec-driven-development
 npm install
 code .
-# Press F5 to launch extension development host
+# Press F5 to launch Extension Development Host
 ```
 
-## 📄 License
+## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
-- Inspired by Kiro IDE's spec-driven development methodology
-- Built for the GitHub Copilot ecosystem
-- Designed for modern development workflows
+- Inspired by systematic development methodologies and spec-driven development practices
+- Built for the GitHub Copilot ecosystem and modern AI-assisted development
+- Designed for professional development teams and individual developers
 
 ---
 
-**Happy Spec-Driven Development!** 🚀
-
-_Transform your ideas into well-structured, implementable features with the power of systematic development and AI assistance._
+**Transform your development workflow with systematic, AI-assisted feature development.**

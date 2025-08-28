@@ -1,18 +1,49 @@
 {
   "name": "spec-driven-development",
   "displayName": "Spec-Driven Development",
-  "description": "Kiro-style spec workflow for VSCode with GitHub Copilot integration",
+  "description": "Systematic feature development with requirements, design, and implementation planning for GitHub Copilot",
   "version": "1.0.0",
-  "publisher": "your-publisher-name",
+  "publisher": "spec-dev-tools",
+  "author": {
+    "name": "Spec Development Tools",
+    "email": "contact@spec-dev-tools.com"
+  },
+  "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/your-username/spec-driven-development"
+    "url": "https://github.com/spec-dev-tools/vscode-spec-driven-development"
   },
+  "bugs": {
+    "url": "https://github.com/spec-dev-tools/vscode-spec-driven-development/issues"
+  },
+  "homepage": "https://github.com/spec-dev-tools/vscode-spec-driven-development#readme",
   "engines": {
     "vscode": "^1.74.0"
   },
-  "categories": ["Other", "Snippets", "Education"],
-  "keywords": ["spec", "requirements", "design", "copilot", "workflow", "kiro"],
+  "categories": ["Other", "Education", "Snippets"],
+  "keywords": [
+    "spec",
+    "requirements",
+    "design",
+    "planning",
+    "workflow",
+    "copilot",
+    "github-copilot",
+    "development",
+    "methodology",
+    "documentation",
+    "project-management",
+    "agile"
+  ],
+  "icon": "resources/icons/spec-icon.png",
+  "galleryBanner": {
+    "color": "#1e1e1e",
+    "theme": "dark"
+  },
+  "qna": "marketplace",
+  "sponsor": {
+    "url": "https://github.com/sponsors/spec-dev-tools"
+  },
 
   "activationEvents": [],
   "main": "./out/extension.js",
@@ -65,6 +96,18 @@
         "title": "💡 Get Guidance",
         "category": "Spec",
         "icon": "$(lightbulb)"
+      },
+      {
+        "command": "specMode.showAllTasks",
+        "title": "📋 Show All Tasks",
+        "category": "Spec",
+        "icon": "$(list-unordered)"
+      },
+      {
+        "command": "specMode.openSettings",
+        "title": "⚙️ Settings",
+        "category": "Spec",
+        "icon": "$(settings-gear)"
       }
     ],
     "views": {
@@ -72,16 +115,6 @@
         {
           "id": "specPanel",
           "name": "Spec Workflow",
-          "when": "true"
-        },
-        {
-          "id": "specFiles",
-          "name": "Spec Files",
-          "when": "specMode.active"
-        },
-        {
-          "id": "specHelp",
-          "name": "Quick Help",
           "when": "true"
         }
       ]
@@ -116,6 +149,11 @@
           "command": "specMode.showGuidance",
           "when": "view == specPanel",
           "group": "navigation"
+        },
+        {
+          "command": "specMode.openSettings",
+          "when": "view == specPanel",
+          "group": "navigation"
         }
       ],
       "view/item/context": [
@@ -128,13 +166,65 @@
           "command": "specMode.markComplete",
           "when": "view == specPanel && viewItem == task-incomplete",
           "group": "inline"
-        },
-        {
-          "command": "specMode.openFile",
-          "when": "view == specFiles && viewItem == spec-file",
-          "group": "inline"
         }
       ]
+    },
+    "configuration": {
+      "title": "Spec-Driven Development",
+      "properties": {
+        "specDrivenDevelopment.workflowBehavior.requirePhaseConfirmation": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show confirmation dialog before transitioning between phases"
+        },
+        "specDrivenDevelopment.workflowBehavior.autoSaveOnPhaseTransition": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically save files when transitioning between phases"
+        },
+        "specDrivenDevelopment.workflowBehavior.showDetailedProgress": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show detailed progress indicators and task completion status"
+        },
+        "specDrivenDevelopment.uiPreferences.compactMode": {
+          "type": "boolean",
+          "default": false,
+          "description": "Use compact layout to save space"
+        },
+        "specDrivenDevelopment.uiPreferences.showTooltips": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show helpful tooltips on hover"
+        },
+        "specDrivenDevelopment.uiPreferences.animateTransitions": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable smooth animations for UI transitions"
+        },
+        "specDrivenDevelopment.integration.copilotPromptStyle": {
+          "type": "string",
+          "enum": ["detailed", "concise"],
+          "default": "detailed",
+          "description": "Style of prompts generated for GitHub Copilot"
+        },
+        "specDrivenDevelopment.integration.fileNamingConvention": {
+          "type": "string",
+          "enum": ["kebab-case", "snake_case", "camelCase"],
+          "default": "kebab-case",
+          "description": "Naming convention for generated spec files"
+        },
+        "specDrivenDevelopment.notifications.showSuccessMessages": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show success notifications for completed actions"
+        },
+        "specDrivenDevelopment.notifications.showProgressNotifications": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show progress notifications during long operations"
+        }
+      }
     }
   },
   "scripts": {

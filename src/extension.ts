@@ -1,28 +1,34 @@
 import * as vscode from "vscode";
-import { SpecWorkflowManager } from "./specWorkflowManager";
-import {
-  SpecPanelProvider,
-  SpecFilesProvider,
-  SpecHelpProvider,
-} from "./specPanelProvider";
+import { WorkflowManager } from "./core/workflowManager";
+import { NotificationManager } from "./core/notificationManager";
+import { FileManager } from "./core/fileManager";
+import { ValidationManager } from "./core/validationManager";
+import { UIManager } from "./core/uiManager";
+import { SettingsManager } from "./core/settingsManager";
 import { ErrorHandler } from "./errorHandler";
-import { UserGuidanceProvider } from "./userGuidance";
+import { ClipboardManager } from "./clipboardManager";
 
 export function activate(context: vscode.ExtensionContext) {
-  const workflowManager = new SpecWorkflowManager();
-  const panelProvider = new SpecPanelProvider(
-    context.extensionUri,
-    workflowManager
+  // Initialize consolidated managers
+  const settingsManager = SettingsManager.getInstance();
+  const notificationManager = NotificationManager.getInstance();
+  const fileManager = FileManager.getInstance();
+  const validationManager = ValidationManager.getInstance();
+
+  // Create consolidated workflow manager
+  const workflowManager = new WorkflowManager(
+    notificationManager,
+    fileManager,
+    validationManager
   );
-  const filesProvider = new SpecFilesProvider(workflowManager);
-  const helpProvider = new SpecHelpProvider();
 
-  // Register all tree data providers
-  vscode.window.registerTreeDataProvider("specPanel", panelProvider);
-  vscode.window.registerTreeDataProvider("specFiles", filesProvider);
-  vscode.window.registerTreeDataProvider("specHelp", helpProvider);
+  // Create consolidated UI manager
+  const uiManager = new UIManager(workflowManager, notificationManager);
 
-  // Start Spec Mode command with enhanced validation and feedback
+  // Register tree data provider
+  vscode.window.registerTreeDataProvider("specPanel", uiManager);
+
+  // Start Spec Mode command - simplified and consolidated
   let lastStartTime = 0;
   const startSpecMode = vscode.commands.registerCommand(
     "specMode.start",
@@ -31,8 +37,8 @@ export function activate(context: vscode.ExtensionContext) {
         // Debounce start command
         const now = Date.now();
         if (now - lastStartTime < 2000) {
-          vscode.window.showWarningMessage(
-            "Please wait before starting another spec."
+          await notificationManager.showDebounceWarning(
+            "starting another spec"
           );
           return;
         }
@@ -40,20 +46,17 @@ export function activate(context: vscode.ExtensionContext) {
 
         // Check if workspace is available
         if (!vscode.workspace.workspaceFolders?.length) {
-          vscode.window
-            .showErrorMessage(
-              "Please open a workspace folder before starting a spec.",
-              "Open Folder"
-            )
-            .then((selection) => {
-              if (selection === "Open Folder") {
-                vscode.commands.executeCommand("vscode.openFolder");
-              }
-            });
+          const result = await notificationManager.showError(
+            "Please open a workspace folder before starting a spec.",
+            ["Open Folder"]
+          );
+          if (result === "Open Folder") {
+            await vscode.commands.executeCommand("vscode.openFolder");
+          }
           return;
         }
 
-        const userInput = await vscode.window.showInputBox({
+        const userInput = await notificationManager.showInputBox({
           prompt: "Describe your feature idea",
           placeHolder:
             "I need to implement landing page to display upcoming events",
@@ -72,54 +75,48 @@ export function activate(context: vscode.ExtensionContext) {
             .replace(/[^a-z0-9\s]/g, "")
             .trim()
             .replace(/\s+/g, "-")
-            .substring(0, 50); // Limit length
+            .substring(0, 50);
 
-          // Validate feature name
           if (featureName.length < 3) {
-            vscode.window.showErrorMessage(
+            await notificationManager.showError(
               "Feature name is too short. Please provide a more descriptive idea."
             );
             return;
           }
 
-          // Show the generated feature name for confirmation
-          const confirmed = await vscode.window.showInformationMessage(
-            `Feature name: "${featureName}". Continue?`,
-            { modal: true },
-            "Yes, Start Spec",
-            "Edit Name",
-            "Cancel"
-          );
-
+          // Show confirmation if enabled
           let finalFeatureName = featureName;
-          if (confirmed === "Edit Name") {
-            const editedName = await vscode.window.showInputBox({
-              prompt: "Enter feature name (kebab-case)",
-              value: featureName,
-              placeHolder: "events-landing-page",
-              validateInput: (value) => {
-                if (!value || value.trim().length < 3) {
-                  return "Feature name must be at least 3 characters";
-                }
-                if (!/^[a-z0-9-]+$/.test(value)) {
-                  return "Feature name should only contain lowercase letters, numbers, and hyphens";
-                }
-                return null;
-              },
-            });
-            if (!editedName) return;
-            finalFeatureName = editedName;
-          } else if (confirmed !== "Yes, Start Spec") {
-            return;
+          if (settingsManager.shouldShowConfirmation("phaseTransition")) {
+            const confirmed = await notificationManager.showConfirmation(
+              `Feature name: "${featureName}". Continue?`,
+              ["Yes, Start Spec", "Edit Name", "Cancel"]
+            );
+
+            if (confirmed === "Edit Name") {
+              const editedName = await notificationManager.showInputBox({
+                prompt: "Enter feature name (kebab-case)",
+                value: featureName,
+                placeHolder: "events-landing-page",
+                validateInput: (value) => {
+                  if (!value || value.trim().length < 3) {
+                    return "Feature name must be at least 3 characters";
+                  }
+                  if (!/^[a-z0-9-]+$/.test(value)) {
+                    return "Feature name should only contain lowercase letters, numbers, and hyphens";
+                  }
+                  return null;
+                },
+              });
+              if (!editedName) return;
+              finalFeatureName = editedName;
+            } else if (confirmed !== "Yes, Start Spec") {
+              return;
+            }
           }
 
-          // Show progress indicator
-          await vscode.window.withProgress(
-            {
-              location: vscode.ProgressLocation.Notification,
-              title: "Starting spec workflow...",
-              cancellable: false,
-            },
+          // Start spec with progress indication
+          await notificationManager.showProgress(
+            "Starting spec workflow...",
             async (progress) => {
               progress.report({
                 increment: 25,
@@ -141,100 +138,42 @@ export function activate(context: vscode.ExtensionContext) {
                 increment: 25,
                 message: "Refreshing views...",
               });
-              panelProvider.refresh();
-              filesProvider.refresh();
+              uiManager.refresh();
 
-              progress.report({
-                increment: 25,
-                message: "Preparing requirements prompt...",
-              });
-              // Use enhanced clipboard functionality
-              await workflowManager.copyRequirementsPrompt(
-                finalFeatureName,
-                userInput
-              );
+              progress.report({ increment: 25, message: "Ready!" });
             }
           );
-
-          // Show success message with next steps
-          const result = await vscode.window.showInformationMessage(
-            `🚀 Spec started for "${finalFeatureName}"! Requirements prompt is ready.`,
-            "Open Copilot Chat",
-            "View Spec Panel"
-          );
-
-          if (result === "Open Copilot Chat") {
-            await vscode.commands.executeCommand(
-              "workbench.panel.chat.view.copilot.focus"
-            );
-            await vscode.commands.executeCommand(
-              "workbench.action.chat.newChat"
-            );
-          } else if (result === "View Spec Panel") {
-            await vscode.commands.executeCommand(
-              "workbench.view.extension.spec-container"
-            );
-          }
         }
       } catch (error) {
-        const recovered = await ErrorHandler.handleError(
+        await ErrorHandler.handleError(
           error instanceof Error ? error : new Error(String(error))
         );
-        if (!recovered) {
-          // If error handling didn't recover, offer to try again
-          const retry = await vscode.window.showErrorMessage(
-            "Failed to start spec. Would you like to try again?",
-            "Try Again",
-            "Cancel"
-          );
-          if (retry === "Try Again") {
-            vscode.commands.executeCommand("specMode.start");
-          }
-        }
       }
     }
   );
 
-  // Next Phase command with enhanced robustness
+  // Next Phase command - simplified
   const nextPhase = vscode.commands.registerCommand(
     "specMode.nextPhase",
     async () => {
       try {
         const result = await workflowManager.moveToNextPhase();
-
         if (result.success) {
+          uiManager.refresh();
           if (result.prompt) {
-            // Use enhanced clipboard functionality for phase transition prompts
-            const currentPhase = workflowManager.getCurrentPhase();
-            switch (currentPhase) {
-              case "design":
-                await workflowManager.copyDesignPrompt();
-                break;
-              case "tasks":
-                await workflowManager.copyTasksPrompt();
-                break;
-              default:
-                // Fallback to basic clipboard for unknown phases
-                await vscode.env.clipboard.writeText(result.prompt);
-                vscode.window.showInformationMessage(
-                  `Moved to ${currentPhase} phase. Prompt copied to clipboard.`
-                );
-            }
+            await ClipboardManager.copyPromptWithEnhancements(
+              result.prompt,
+              `${workflowManager.getCurrentPhase()} Phase Prompt`
+            );
           }
-          panelProvider.refresh();
-          filesProvider.refresh();
-          updateStatusBar();
         } else {
-          vscode.window
-            .showErrorMessage(
-              result.error || "Failed to move to next phase.",
-              "Retry"
-            )
-            .then((selection) => {
-              if (selection === "Retry") {
-                vscode.commands.executeCommand("specMode.nextPhase");
-              }
-            });
+          const retry = await notificationManager.showError(
+            result.error || "Failed to move to next phase.",
+            ["Retry"]
+          );
+          if (retry === "Retry") {
+            vscode.commands.executeCommand("specMode.nextPhase");
+          }
         }
       } catch (error) {
         await ErrorHandler.handleError(
@@ -244,24 +183,26 @@ export function activate(context: vscode.ExtensionContext) {
     }
   );
 
-  // Execute Task command with enhanced feedback
+  // Execute Task command - simplified
   let lastTaskExecutionTime = 0;
   const executeTask = vscode.commands.registerCommand(
     "specMode.executeTask",
     async (taskItem) => {
       try {
-        // Debounce task execution
         const now = Date.now();
         if (now - lastTaskExecutionTime < 1000) {
-          vscode.window.showWarningMessage(
-            "Please wait before executing another task."
+          await notificationManager.showDebounceWarning(
+            "executing another task"
           );
           return;
         }
         lastTaskExecutionTime = now;
 
-        // Use enhanced clipboard functionality for task execution
-        await workflowManager.copyTaskExecutionPrompt(taskItem.task);
+        const prompt = workflowManager.getTaskExecutionPrompt(taskItem.task);
+        await ClipboardManager.copyPromptWithEnhancements(
+          prompt,
+          `Task: ${taskItem.task.title}`
+        );
       } catch (error) {
         await ErrorHandler.handleError(
           error instanceof Error ? error : new Error(String(error))
@@ -270,58 +211,42 @@ export function activate(context: vscode.ExtensionContext) {
     }
   );
 
-  // Refresh command with enhanced feedback
+  // Enhanced task execution - simplified
+  const executeTaskEnhanced = vscode.commands.registerCommand(
+    "specMode.executeTaskEnhanced",
+    async (task) => {
+      try {
+        const now = Date.now();
+        if (now - lastTaskExecutionTime < 1000) {
+          await notificationManager.showDebounceWarning(
+            "executing another task"
+          );
+          return;
+        }
+        lastTaskExecutionTime = now;
+
+        const prompt = workflowManager.getTaskExecutionPrompt(task);
+        await ClipboardManager.copyPromptWithEnhancements(
+          prompt,
+          `Enhanced Task: ${task.title}`
+        );
+      } catch (error) {
+        await ErrorHandler.handleError(
+          error instanceof Error ? error : new Error(String(error))
+        );
+      }
+    }
+  );
+
+  // Refresh command - simplified
   const refresh = vscode.commands.registerCommand(
     "specMode.refresh",
     async () => {
       try {
-        panelProvider.refresh();
-        filesProvider.refresh();
-        updateStatusBar();
-
-        vscode.window.showInformationMessage(
-          "🔄 Spec views refreshed successfully!"
-        );
-      } catch (error) {
-        await ErrorHandler.handleError(
-          error instanceof Error ? error : new Error(String(error))
-        );
-      }
-    }
-  );
-
-  // Open file command
-  const openFile = vscode.commands.registerCommand(
-    "specMode.openFile",
-    (filePath: string) => {
-      vscode.window.showTextDocument(vscode.Uri.file(filePath));
-    }
-  );
-
-  // Mark task complete command with confirmation
-  const markComplete = vscode.commands.registerCommand(
-    "specMode.markComplete",
-    async (taskItem) => {
-      try {
-        const confirmed = await vscode.window.showInformationMessage(
-          `Mark task as complete: "${taskItem.task.title}"?`,
-          { modal: true },
-          "Yes, Complete",
-          "Cancel"
-        );
-
-        if (confirmed === "Yes, Complete") {
-          await workflowManager.markTaskComplete(taskItem.task.id);
-          panelProvider.refresh();
-
-          // Show progress update
-          const tasks = await workflowManager.getTasks();
-          const completedTasks = tasks.filter((t) => t.completed).length;
-          const totalTasks = tasks.length;
-
-          vscode.window.showInformationMessage(
-            `✅ Task completed! Progress: ${completedTasks}/${totalTasks} tasks`,
-            completedTasks === totalTasks ? "All Done!" : "Continue"
+        uiManager.refresh();
+        if (settingsManager.shouldShowNotification("success")) {
+          await notificationManager.showSuccess(
+            "🔄 Spec views refreshed successfully!"
           );
         }
       } catch (error) {
@@ -332,19 +257,151 @@ export function activate(context: vscode.ExtensionContext) {
     }
   );
 
-  // Copy prompts command - allows users to choose from available prompts
+  // Open file command - using file manager
+  const openFile = vscode.commands.registerCommand(
+    "specMode.openFile",
+    async (filePath: string) => {
+      try {
+        await fileManager.openFile(filePath);
+      } catch (error) {
+        await ErrorHandler.handleError(
+          error instanceof Error ? error : new Error(String(error))
+        );
+      }
+    }
+  );
+
+  // Mark task complete command - simplified
+  const markComplete = vscode.commands.registerCommand(
+    "specMode.markComplete",
+    async (taskItem) => {
+      try {
+        let confirmed = "Yes, Complete";
+        if (settingsManager.shouldShowConfirmation("taskCompletion")) {
+          confirmed =
+            (await notificationManager.showConfirmation(
+              `Mark task as complete: "${taskItem.task.title}"?`,
+              ["Yes, Complete", "Cancel"]
+            )) || "Cancel";
+        }
+
+        if (confirmed === "Yes, Complete") {
+          await workflowManager.markTaskComplete(taskItem.task.id);
+          uiManager.refresh();
+
+          const tasks = await workflowManager.getTasks();
+          const completedTasks = tasks.filter((t) => t.completed).length;
+          const totalTasks = tasks.length;
+
+          await notificationManager.showTaskCompletion(
+            taskItem.task.title,
+            completedTasks,
+            totalTasks
+          );
+        }
+      } catch (error) {
+        await ErrorHandler.handleError(
+          error instanceof Error ? error : new Error(String(error))
+        );
+      }
+    }
+  );
+
+  // Simplified task management commands
+  const reopenTask = vscode.commands.registerCommand(
+    "specMode.reopenTask",
+    async (task) => {
+      try {
+        // Simplified task reopening - just mark as incomplete
+        await workflowManager.markTaskComplete(task.id); // This will toggle completion
+        uiManager.refresh();
+        await notificationManager.showSuccess(`Task "${task.title}" reopened`);
+      } catch (error) {
+        await ErrorHandler.handleError(
+          error instanceof Error ? error : new Error(String(error))
+        );
+      }
+    }
+  );
+
+  const showAllTasks = vscode.commands.registerCommand(
+    "specMode.showAllTasks",
+    async () => {
+      try {
+        const tasks = await workflowManager.getTasks();
+        if (tasks.length === 0) {
+          await notificationManager.showWarning(
+            "No tasks found. Complete the Tasks phase first."
+          );
+          return;
+        }
+
+        const taskItems = tasks.map((task) => ({
+          label: task.completed ? `✅ ${task.title}` : `⏳ ${task.title}`,
+          description: task.completed ? "Completed" : "Pending",
+          detail: `Requirements: ${task.requirements.join(", ") || "None"}`,
+          task: task,
+        }));
+
+        const selectedTask = await notificationManager.showQuickPick(
+          taskItems,
+          {
+            placeHolder: "Select a task to view or execute",
+          }
+        );
+
+        if (selectedTask && !selectedTask.task.completed) {
+          vscode.commands.executeCommand("specMode.executeTask", {
+            task: selectedTask.task,
+          });
+        }
+      } catch (error) {
+        await ErrorHandler.handleError(
+          error instanceof Error ? error : new Error(String(error))
+        );
+      }
+    }
+  );
+
+  // Copy prompts command - simplified
   const copyPrompts = vscode.commands.registerCommand(
     "specMode.copyPrompts",
     async () => {
       try {
         if (!workflowManager.isActive()) {
-          vscode.window.showWarningMessage(
+          await notificationManager.showWarning(
             "No active spec. Start a spec first to access prompts."
           );
           return;
         }
 
-        await workflowManager.copyFromAvailablePrompts();
+        const currentPhase = workflowManager.getCurrentPhase();
+        const featureName = workflowManager.getCurrentFeature();
+        let prompt = "";
+
+        switch (currentPhase) {
+          case "requirements":
+            prompt = workflowManager.getRequirementsPrompt(featureName);
+            break;
+          case "design":
+            prompt = workflowManager.getDesignPrompt();
+            break;
+          case "tasks":
+            prompt = workflowManager.getTasksPrompt();
+            break;
+          default:
+            await notificationManager.showWarning(
+              "No prompts available for current phase"
+            );
+            return;
+        }
+
+        await ClipboardManager.copyPromptWithEnhancements(
+          prompt,
+          `${
+            currentPhase.charAt(0).toUpperCase() + currentPhase.slice(1)
+          } Phase Prompt`
+        );
       } catch (error) {
         await ErrorHandler.handleError(
           error instanceof Error ? error : new Error(String(error))
@@ -353,37 +410,61 @@ export function activate(context: vscode.ExtensionContext) {
     }
   );
 
-  // Show guidance command - provides contextual help and next steps
+  // Show guidance command - simplified
   const showGuidance = vscode.commands.registerCommand(
     "specMode.showGuidance",
     async () => {
       try {
-        if (!workflowManager.isActive()) {
-          // Show general guidance for getting started
-          const guidance = await UserGuidanceProvider.getContextualGuidance(
-            workflowManager.getCurrentPhase(),
-            {}
-          );
-          await UserGuidanceProvider.showGuidance(guidance);
-          return;
+        const currentPhase = workflowManager.getCurrentPhase();
+        const isActive = workflowManager.isActive();
+
+        let message = "";
+        let actions: string[] = [];
+
+        if (!isActive) {
+          message =
+            "💡 Welcome to Spec-Driven Development!\n\nStart by creating your first spec to begin the structured workflow.";
+          actions = ["Start Spec", "Learn More"];
+        } else {
+          switch (currentPhase) {
+            case "requirements":
+              message =
+                "📝 Requirements Phase\n\nDefine user stories and acceptance criteria using EARS format.";
+              actions = ["Copy Prompt", "Next Phase"];
+              break;
+            case "design":
+              message =
+                "🎨 Design Phase\n\nCreate technical architecture and component design.";
+              actions = ["Copy Prompt", "Next Phase"];
+              break;
+            case "tasks":
+              message =
+                "📋 Tasks Phase\n\nBreak down design into actionable implementation tasks.";
+              actions = ["Copy Prompt", "Next Phase"];
+              break;
+            case "execution":
+              message =
+                "⚡ Execution Phase\n\nImplement tasks one by one with Copilot assistance.";
+              actions = ["Show Tasks", "Copy Prompt"];
+              break;
+          }
         }
 
-        // Get contextual guidance for current state
-        const currentPhase = workflowManager.getCurrentPhase();
-        const specFiles = await workflowManager.getSpecFiles();
-        const tasks = await workflowManager.getTasks();
-
-        const guidance = await UserGuidanceProvider.getContextualGuidance(
-          currentPhase,
-          {
-            featureName: workflowManager.getCurrentFeature(),
-            hasFiles: specFiles.some((f) => f.exists),
-            completedTasks: tasks.filter((t) => t.completed).length,
-            totalTasks: tasks.length,
-          }
+        const result = await notificationManager.showHelp(
+          "Guidance",
+          message,
+          actions
         );
 
-        await UserGuidanceProvider.showGuidance(guidance);
+        if (result === "Start Spec") {
+          vscode.commands.executeCommand("specMode.start");
+        } else if (result === "Copy Prompt") {
+          vscode.commands.executeCommand("specMode.copyPrompts");
+        } else if (result === "Next Phase") {
+          vscode.commands.executeCommand("specMode.nextPhase");
+        } else if (result === "Show Tasks") {
+          vscode.commands.executeCommand("specMode.showAllTasks");
+        }
       } catch (error) {
         await ErrorHandler.handleError(
           error instanceof Error ? error : new Error(String(error))
@@ -392,52 +473,7 @@ export function activate(context: vscode.ExtensionContext) {
     }
   );
 
-  // Status bar item
-  const statusBarItem = vscode.window.createStatusBarItem(
-    vscode.StatusBarAlignment.Left,
-    100
-  );
-  statusBarItem.command = "workbench.view.extension.spec-container";
-
-  // Update status bar based on spec state with enhanced feedback
-  const updateStatusBar = () => {
-    if (workflowManager.isActive()) {
-      const currentPhase = workflowManager.getCurrentPhase();
-      const phaseEmoji = getPhaseEmoji(currentPhase);
-      statusBarItem.text = `${phaseEmoji} Spec: ${workflowManager.getCurrentFeature()}`;
-      statusBarItem.tooltip = `Spec Mode Active - ${workflowManager.getProgressSummary()}\nCurrent Phase: ${currentPhase}\nClick for guidance`;
-      statusBarItem.backgroundColor = new vscode.ThemeColor(
-        "statusBarItem.prominentBackground"
-      );
-      statusBarItem.show();
-
-      // Show periodic tips for active specs
-      UserGuidanceProvider.showPeriodicTip(currentPhase);
-    } else {
-      statusBarItem.text = "$(notebook) Start Spec";
-      statusBarItem.tooltip = "Click to start spec-driven development";
-      statusBarItem.backgroundColor = undefined;
-      statusBarItem.show();
-    }
-  };
-
-  // Helper function for phase emojis
-  const getPhaseEmoji = (phase: string): string => {
-    switch (phase) {
-      case "requirements":
-        return "📝";
-      case "design":
-        return "🎨";
-      case "tasks":
-        return "📋";
-      case "execution":
-        return "⚡";
-      default:
-        return "$(notebook)";
-    }
-  };
-
-  updateStatusBar();
+  // Status bar is now handled by UIManager
 
   // Welcome message for first-time users
   const hasShownWelcome = context.globalState.get(
@@ -445,34 +481,38 @@ export function activate(context: vscode.ExtensionContext) {
     false
   );
   if (!hasShownWelcome) {
-    vscode.window
-      .showInformationMessage(
-        "🎉 Welcome to Spec-Driven Development! Start by creating your first spec.",
-        "Get Started",
-        "Learn More"
-      )
-      .then((selection) => {
-        if (selection === "Get Started") {
-          vscode.commands.executeCommand("specMode.start");
-        } else if (selection === "Learn More") {
-          vscode.commands.executeCommand(
-            "workbench.view.extension.spec-container"
-          );
-        }
-      });
+    notificationManager.showWelcome();
     context.globalState.update("specMode.hasShownWelcome", true);
   }
+
+  // Settings command
+  const openSettings = vscode.commands.registerCommand(
+    "specMode.openSettings",
+    async () => {
+      try {
+        await settingsManager.showQuickSettings();
+      } catch (error) {
+        await ErrorHandler.handleError(
+          error instanceof Error ? error : new Error(String(error))
+        );
+      }
+    }
+  );
 
   context.subscriptions.push(
     startSpecMode,
     nextPhase,
     executeTask,
+    executeTaskEnhanced,
     refresh,
     openFile,
     markComplete,
+    reopenTask,
+    showAllTasks,
     copyPrompts,
     showGuidance,
-    statusBarItem
+    openSettings,
+    uiManager
   );
 }
 

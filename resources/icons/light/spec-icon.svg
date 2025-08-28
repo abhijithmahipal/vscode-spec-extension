@@ -1,6 +1,19 @@
 <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <path d="M3 4h10v1H3V4zm0 3h10v1H3V7zm0 3h10v1H3v-1z" fill="#424242"/>
-  <circle cx="1.5" cy="4.5" r="0.5" fill="#424242"/>
-  <circle cx="1.5" cy="7.5" r="0.5" fill="#424242"/>
-  <circle cx="1.5" cy="10.5" r="0.5" fill="#424242"/>
+  <!-- Document stack for light theme -->
+  <rect x="2" y="3" width="8" height="9" rx="1" fill="none" stroke="#424242" stroke-width="0.5"/>
+  <rect x="3" y="2" width="8" height="9" rx="1" fill="none" stroke="#424242" stroke-width="0.5"/>
+  <rect x="4" y="1" width="8" height="9" rx="1" fill="none" stroke="#1A1A1A" stroke-width="0.5"/>
+  
+  <!-- Workflow indicators -->
+  <path d="M5 4 L7 4 M6.5 3.5 L7 4 L6.5 4.5" stroke="#2563EB" stroke-width="0.5" fill="none" stroke-linecap="round"/>
+  <path d="M5 6 L7 6 M6.5 5.5 L7 6 L6.5 6.5" stroke="#2563EB" stroke-width="0.5" fill="none" stroke-linecap="round"/>
+  <path d="M5 8 L7 8 M6.5 7.5 L7 8 L6.5 8.5" stroke="#2563EB" stroke-width="0.5" fill="none" stroke-linecap="round"/>
+  
+  <!-- Phase dots -->
+  <circle cx="8" cy="4" r="0.5" fill="#2563EB"/>
+  <circle cx="8" cy="6" r="0.5" fill="#2563EB"/>
+  <circle cx="8" cy="8" r="0.5" fill="#2563EB"/>
+  
+  <!-- Completion check -->
+  <path d="M12 6 L13 7 L15 5" stroke="#16A34A" stroke-width="0.5" fill="none" stroke-linecap="round"/>
 </svg>
